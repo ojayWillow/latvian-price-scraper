@@ -554,6 +554,154 @@ def get_number_string(value: str) -> str:
     return result
 
 
+
+# ============================================================
+# LATVIAN BUILDING MATERIAL STORES HANDLERS
+# ============================================================
+
+class DepoHandler(BaseWebsiteHandler):
+    """Handler for online.depo.lv - Latvian building materials store"""
+    
+    def _get_product_name(self) -> str:
+        # Try to get product name from h1 or title
+        name_elem = self.request_data.find('h1')
+        if not name_elem:
+            name_elem = self.request_data.find(class_='product-title')
+        return name_elem.text.strip() if name_elem else ''
+    
+    def _get_product_price(self) -> float:
+        # Price is in format "20.59 €/gab"
+        try:
+            price_elem = self.request_data.find(string=re.compile(r'\d+\.\d+'))
+            if price_elem:
+                price_text = price_elem.strip()
+                # Extract just the number
+                price_match = re.search(r'(\d+\.\d+)', price_text)
+                if price_match:
+                    return float(price_match.group(1))
+        except:
+            pass
+        return 0.0
+    
+    def _get_product_currency(self) -> str:
+        return 'EUR'
+    
+    def _get_product_id(self) -> str:
+        # Product ID is in the URL: online.depo.lv/product/407407
+        return self.url.split('/')[-1]
+
+
+class KSenukaiHandler(BaseWebsiteHandler):
+    """Handler for ksenukai.lv - Latvian building materials store"""
+    
+    def _get_product_name(self) -> str:
+        name_elem = self.request_data.find('h1')
+        if not name_elem:
+            name_elem = self.request_data.find(class_='product-name')
+        return name_elem.text.strip() if name_elem else ''
+    
+    def _get_product_price(self) -> float:
+        try:
+            price_elem = self.request_data.find(class_=re.compile('price|cena'))
+            if price_elem:
+                price_text = price_elem.text.strip()
+                price_match = re.search(r'(\d+[,\.]\d+)', price_text)
+                if price_match:
+                    return float(price_match.group(1).replace(',', '.'))
+        except:
+            pass
+        return 0.0
+    
+    def _get_product_currency(self) -> str:
+        return 'EUR'
+    
+    def _get_product_id(self) -> str:
+        # Extract ID from URL
+        id_match = re.search(r'/p/(\d+)', self.url)
+        if id_match:
+            return id_match.group(1)
+        return self.url.split('/')[-1]
+
+
+class KursiHandler(BaseWebsiteHandler):
+    """Handler for kursi.lv - Latvian building materials store"""
+    
+    def _get_product_name(self) -> str:
+        name_elem = self.request_data.find('h1')
+        return name_elem.text.strip() if name_elem else ''
+    
+    def _get_product_price(self) -> float:
+        try:
+            price_elem = self.request_data.find(class_=re.compile('price'))
+            if price_elem:
+                price_text = price_elem.text.strip()
+                price_match = re.search(r'(\d+[,\.]\d+)', price_text)
+                if price_match:
+                    return float(price_match.group(1).replace(',', '.'))
+        except:
+            pass
+        return 0.0
+    
+    def _get_product_currency(self) -> str:
+        return 'EUR'
+    
+    def _get_product_id(self) -> str:
+        return self.url.split('/')[-1]
+
+
+class BuvservissHandler(BaseWebsiteHandler):
+    """Handler for buvserviss.lv - Latvian building materials store"""
+    
+    def _get_product_name(self) -> str:
+        name_elem = self.request_data.find('h1')
+        return name_elem.text.strip() if name_elem else ''
+    
+    def _get_product_price(self) -> float:
+        try:
+            # Price format: "€6.24/gab" or "34.99€"
+            price_elem = self.request_data.find(class_=re.compile('price'))
+            if price_elem:
+                price_text = price_elem.text.strip()
+                price_match = re.search(r'(\d+[,\.]\d+)', price_text)
+                if price_match:
+                    return float(price_match.group(1).replace(',', '.'))
+        except:
+            pass
+        return 0.0
+    
+    def _get_product_currency(self) -> str:
+        return 'EUR'
+    
+    def _get_product_id(self) -> str:
+        return self.url.split('/')[-1]
+
+
+class CenukklubsHandler(BaseWebsiteHandler):
+    """Handler for cenuklubs.lv - Latvian building materials store"""
+    
+    def _get_product_name(self) -> str:
+        name_elem = self.request_data.find('h1')
+        return name_elem.text.strip() if name_elem else ''
+    
+    def _get_product_price(self) -> float:
+        try:
+            price_elem = self.request_data.find(class_=re.compile('price|cena'))
+            if price_elem:
+                price_text = price_elem.text.strip()
+                price_match = re.search(r'(\d+[,\.]\d+)', price_text)
+                if price_match:
+                    return float(price_match.group(1).replace(',', '.'))
+        except:
+            pass
+        return 0.0
+    
+    def _get_product_currency(self) -> str:
+        return 'EUR'
+    
+    def _get_product_id(self) -> str:
+        return self.url.split('/')[-1]
+
+
 SUPPORTED_DOMAINS: dict[str, BaseWebsiteHandler] = {
     "komplett": KomplettHandler,
     "proshop": ProshopHandler,
@@ -571,4 +719,10 @@ SUPPORTED_DOMAINS: dict[str, BaseWebsiteHandler] = {
     "newegg": NeweggHandler,
     "hifiklubben": HifiKlubbenHandler,
     "shein": SheinHandler,
+    # Latvian building material stores
+    "online.depo": DepoHandler,
+    "ksenukai": KSenukaiHandler,
+    "kursi": KursiHandler,
+    "buvserviss": BuvservissHandler,
+    "cenuklubs": CenukklubsHandler,
 }
